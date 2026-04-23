@@ -18,6 +18,10 @@ import { Config, FeedItem, ActionLog } from "./models.js";
 import slackSvc from "./slack.service.js";
 import gmailSvc from "./gmail.service.js";
 import pipelineSvc from "./pipeline.service.js";
+import {
+  getCalendarEvents,
+  createCalendarEvent
+} from "./calendar.service.js";
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || "http://localhost:3000" }));
@@ -486,6 +490,28 @@ app.post("/api/slack/webhook", async (req, res) => {
     );
   } catch (err) {
     console.error("[webhook] processing error:", err.message);
+  }
+});
+
+// ─── Calendar Events ───────────────────────────────────────────
+
+app.get("/api/calendar/events", async (req, res) => {
+  try {
+    const result = await getCalendarEvents();
+    res.json(result);
+  } catch (e) {
+    console.error("[calendar/events]", e.message);
+    res.status(500).json({ events: [], error: e.message });
+  }
+});
+
+app.post("/api/calendar/events", async (req, res) => {
+  try {
+    const event = await createCalendarEvent(req.body);
+    res.json({ ok: true, event });
+  } catch (e) {
+    console.error("[calendar/create]", e.message);
+    res.status(500).json({ ok: false, error: e.message });
   }
 });
 
